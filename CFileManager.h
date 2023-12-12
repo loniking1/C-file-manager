@@ -18,4 +18,5 @@ VOID CreateDirectoryIfNotExist(const CHAR* path);
 VOID RecurseCreateDirectoryIfNotExist(const CHAR* dirname);
 VOID WriteToFile(const CHAR* filePath, const TCHAR* content);
 VOID PrintFileContent(const TCHAR* filePath);
+VOID ResetFile(const TCHAR* filePath);
 VOID FileManager();

@@ -12,8 +12,6 @@ VOID CreateDirectoryIfNotExist(const CHAR* path) {
     }
 }
 
-
-
 VOID RecurseCreateDirectoryIfNotExist(const CHAR* dirname) {
     const CHAR* pPath;
     CHAR* temp;
@@ -55,26 +53,37 @@ VOID RecurseCreateDirectoryIfNotExist(const CHAR* dirname) {
     CreateDirectoryIfNotExist(dirname);
 }
 
-
-
-
-
 VOID WriteToFile(const CHAR* filePath, const TCHAR* content) {
     HANDLE hFile;
     INT nBytesWritten;
     SHORT error;
 
-    hFile = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFile(filePath, FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         error = GetLastError();
         printf_s("Error creating file: %s (Error code: %d)\n", filePath, error);
         ExitProcess(error);
     }
 
-    if (!WriteFile(hFile, content, strlen(content) * sizeof(TCHAR), &nBytesWritten, NULL)) {
+    if (!WriteFile(hFile, content, sizeof(TCHAR), &nBytesWritten, NULL)) {
         error = GetLastError();
         printf_s("Error writing to file: %s (Error code: %d)\n", filePath, error);
         CloseHandle(hFile);
+        ExitProcess(error);
+    }
+
+    CloseHandle(hFile);
+}
+
+VOID ResetFile(const TCHAR* filePath) {
+    HANDLE hFile;
+    SHORT error;
+
+    hFile = CreateFile(filePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        error = GetLastError();
+        printf_s("Error creating file: %s (Error code: %d)\n", filePath, error);
         ExitProcess(error);
     }
 
@@ -126,9 +135,7 @@ VOID PrintFileContent(const TCHAR* filePath) {
 VOID FileManager() {
     CHAR* fileName;
     CHAR* filePath;
-    TCHAR* content;
     CHAR* completeFilePath;
-    SHORT sContentSize;
     SHORT sFilePathLen;
     CHAR cHelper;
     INT error;
@@ -174,11 +181,12 @@ VOID FileManager() {
             ExitProcess(error);
         }
 
-        sprintf_s(completeFilePath, sFilePathLen + 1, "%s\\%s", filePath, fileName);
+        sprintf_s(completeFilePath, sFilePathLen + 1, "%s%c%s", filePath, SEPARATOR, fileName);
 
         //file existance checker
         if (GetFileAttributes(completeFilePath) != INVALID_FILE_ATTRIBUTES) {
             printf_s("File already exists. Do you want to override it? (Y/N): ");
+
             while (getchar() != '\n'); // clears buffer
 
             if (scanf_s("%c", &cHelper, 2) != 1) {
@@ -196,57 +204,31 @@ VOID FileManager() {
                 free(completeFilePath);
                 return;
             }
+
+            ResetFile(completeFilePath);
         }
 
         RecurseCreateDirectoryIfNotExist(filePath);
 
         printf_s("Enter content (EOL to end):\n");
 
-        content = (TCHAR*)malloc(sizeof(TCHAR));
-        if (content == NULL) {
-            error = GetLastError();
-            printf_s("Memory allocation failed (Error code: %d).\n", error);
-            free(fileName);
-            free(filePath);
-            free(completeFilePath);
-            ExitProcess(error);
-        }
-
         while (getchar() != '\n'); //clears buffer
 
         //input handling and writing to file on-input
-        sContentSize = 0;
         while ((cHelper = getch()) != 13) {
-            content[sContentSize++] = cHelper;
-
-            content = (TCHAR*)realloc(content, (sContentSize + 1) * sizeof(TCHAR));
-            if (content == NULL) {
-                error = GetLastError();
-                printf_s(("Memory reallocation failed (Error code: %d).\n"), error);
-                free(fileName);
-                free(filePath);
-                free(completeFilePath);
-                free(content);
-                ExitProcess(error);
-            }
-
-            content[sContentSize] = ('\0');
-
             printf_s("%c", cHelper);
-
-            WriteToFile(completeFilePath, content);
+            WriteToFile(completeFilePath, &cHelper);
         }
 
-        content[sContentSize] = ('\0');
+        cHelper = '\0';
 
-        WriteToFile(completeFilePath, content);
+        WriteToFile(completeFilePath, &cHelper);
 
         PrintFileContent(completeFilePath);
 
         free(fileName);
         free(filePath);
         free(completeFilePath);
-        free(content);
 }
 
 int main() {
