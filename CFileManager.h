@@ -9,7 +9,13 @@
 
 
 #ifdef _WIN32
-const char SEPARATOR = '\\';
+const CHAR SEPARATOR = '\\';
 #else
-const char SEPARATOR = '/';
+const CHAR SEPARATOR = '/';
 #endif
+
+VOID CreateDirectoryIfNotExist(const CHAR* path);
+VOID RecurseCreateDirectoryIfNotExist(const CHAR* dirname);
+VOID WriteToFile(const CHAR* filePath, const TCHAR* content);
+VOID PrintFileContent(const TCHAR* filePath);
+VOID FileManager();
