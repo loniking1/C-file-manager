@@ -138,7 +138,7 @@ VOID FileManager() {
     CHAR* completeFilePath;
     SHORT sFilePathLen;
     CHAR cHelper;
-    INT error;
+    SHORT error;
 
     fileName = (CHAR*)malloc(sizeof(CHAR) * MAX_FILE_NAME);
     if (fileName == NULL) {
@@ -155,80 +155,92 @@ VOID FileManager() {
         ExitProcess(error);
     }
     
-        printf_s("Enter the file name: ");
-        if (scanf_s("%s", fileName, MAX_FILE_NAME) != 1) {
-            printf_s("Invalid input. Please try again.\n");
-            return;
-        }
+    printf_s("Enter the file name: ");
+    if (scanf_s("%s", fileName, MAX_FILE_NAME) != 1) {
+        printf_s("Invalid input. Please try again.\n");
+        return;
+    }
 
-        printf_s("Enter the file path: ");
-        if (scanf_s("%s", filePath, MAX_FILE_PATH) != 1) {
-            printf_s("Invalid input. Please try again.\n");
-            free(fileName);
-            return;
-        }
+    if (strlen(fileName) > 4 && !strncmp(fileName + strlen(fileName) - 4, ".exe", 4)) {
+        printf_s("Unallowed file extention detected, please try again.\n");
+        free(fileName);
+        return;
+    }
 
+    printf_s("Enter the file path: ");
+    if (scanf_s("%s", filePath, MAX_FILE_PATH) != 1) {
+        printf_s("Invalid input. Please try again.\n"); 
+        free(fileName);
+        return;
+    }
 
-        sFilePathLen = strlen(filePath) + strlen(fileName) + 2;
-
-        completeFilePath = (CHAR*)malloc(sFilePathLen * sizeof(CHAR) + 1);
-
-        if (completeFilePath == NULL) {
-            error = GetLastError();
-            printf_s("Memory allocation failed (Error code: %d).\n", error);
-            free(fileName);
-            free(filePath);
-            ExitProcess(error);
-        }
-
-        sprintf_s(completeFilePath, sFilePathLen + 1, "%s%c%s", filePath, SEPARATOR, fileName);
-
-        //file existance checker
-        if (GetFileAttributes(completeFilePath) != INVALID_FILE_ATTRIBUTES) {
-            printf_s("File already exists. Do you want to override it? (Y/N): ");
-
-            while (getchar() != '\n'); // clears buffer
-
-            if (scanf_s("%c", &cHelper, 2) != 1) {
-                printf_s("Invalid input. Please try again.\n");
-                free(fileName);
-                free(filePath);
-                free(completeFilePath);
-                return;
-            }
-
-            if (cHelper != 'Y' && cHelper != 'y') {
-                printf_s("Okay goodbye!\n");
-                free(fileName);
-                free(filePath);
-                free(completeFilePath);
-                return;
-            }
-
-            ResetFile(completeFilePath);
-        }
-
-        RecurseCreateDirectoryIfNotExist(filePath);
-
-        printf_s("Enter content (EOL to end):\n");
-
-        while (getchar() != '\n'); //clears buffer
-
-        //input handling and writing to file on-input
-        while ((cHelper = getch()) != 13) {
-            printf_s("%c", cHelper);
-            WriteToFile(completeFilePath, &cHelper);
-        }
-
-        cHelper = '\0';
-
-        WriteToFile(completeFilePath, &cHelper);
-
-        PrintFileContent(completeFilePath);
-
+    if (strncmp(filePath, UNALLOWED_PATH, strlen(UNALLOWED_PATH)) == 0) {
+        printf_s("Unallowed path detected, please try again.\n");
         free(fileName);
         free(filePath);
-        free(completeFilePath);
+        return;
+    }
+
+    sFilePathLen = strlen(filePath) + strlen(fileName) + 2;
+
+    completeFilePath = (CHAR*)malloc(sFilePathLen * sizeof(CHAR) + 1);
+
+    if (completeFilePath == NULL) {
+        error = GetLastError();
+        printf_s("Memory allocation failed (Error code: %d).\n", error);
+        free(fileName);
+        free(filePath);
+        ExitProcess(error);
+    }
+
+    sprintf_s(completeFilePath, sFilePathLen + 1, "%s%c%s", filePath, SEPARATOR, fileName);
+
+    //file existance checker
+    if (GetFileAttributes(completeFilePath) != INVALID_FILE_ATTRIBUTES) {
+        printf_s("File already exists. Do you want to override it? (Y/N): ");
+
+        while (getchar() != '\n'); // clears buffer
+
+        if (scanf_s("%c", &cHelper, 2) != 1) {
+            printf_s("Invalid input. Please try again.\n");
+            free(fileName);
+            free(filePath);
+            free(completeFilePath);
+            return;
+        }
+
+        if (cHelper != 'Y' && cHelper != 'y') {
+            printf_s("Okay goodbye!\n");
+            free(fileName);
+            free(filePath);
+            free(completeFilePath);
+            return;
+        }
+
+        ResetFile(completeFilePath);
+    }
+
+    RecurseCreateDirectoryIfNotExist(filePath);
+
+    printf_s("Enter content (EOL to end):\n");
+
+    while (getchar() != '\n'); //clears buffer
+
+    //input handling and writing to file on-input
+    while ((cHelper = getch()) != 13) {
+        printf_s("%c", cHelper);
+        WriteToFile(completeFilePath, &cHelper);
+    }
+
+    cHelper = '\0';
+
+    WriteToFile(completeFilePath, &cHelper);
+
+    PrintFileContent(completeFilePath);
+
+    free(fileName);
+    free(filePath);
+    free(completeFilePath);
 }
 
 int main() {

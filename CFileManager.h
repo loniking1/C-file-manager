@@ -6,6 +6,7 @@
 
 #define MAX_FILE_NAME 128
 #define MAX_FILE_PATH 256
+#define UNALLOWED_PATH "C:\\exercise1_not_here"
 
 
 #ifdef _WIN32
